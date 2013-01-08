@@ -1,14 +1,14 @@
 module Enid
   class Sexp < String
     autoload :Parser, 'enid/sexp/parser'
-    attr_reader :cons
+    attr_reader :seq
 
     def initialize(val)
       case val
       when String
-        @cons = Parser.new(val).cons
-      when Cons
-        @cons = val
+        @seq = Parser.new(val).seq
+      when Enumerable
+        @seq = val
       else
         raise TypeError, "Can't convert #{val} into s-expression"
       end
@@ -16,18 +16,19 @@ module Enid
     end
 
     private
-    def emit
-      "(#{
-        @cons.each_cons.reduce('') do |s, c|
-          s << " #{stringify c.car}"
-          s << " . #{stringify c.cdr}" unless c.cdr.is_a?(Cons) || c.cdr.nil?
-          s
-        end.strip unless @cons.empty?
-      })" if @cons
+    def emit(s = @seq)
+      s.kind_of?(Enumerable) ? "(#{s.map {|q| stringify q}.join ' '})" : stringify(s)
     end
 
-    def stringify(val)
-      val.is_a?(Symbol) ? val.to_s : val.inspect
+    def stringify(s)
+      case s
+      when Enumerable
+        emit s
+      when Symbol
+        s.to_s
+      else
+        s.inspect
+      end
     end
   end
 end

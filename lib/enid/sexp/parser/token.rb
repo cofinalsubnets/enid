@@ -24,14 +24,16 @@ module Enid
 
       class Constant < Token
         def initialize(n)
-          @value = Object.const_get n
+          @value = n.split('::').reduce(Object) {|c,n| c.const_get n}
         end
       end
 
       SPECIAL = [ 
         OPEN  = new(?(),
         CLOSE = new(?)),
-        DOT   = new(?.)
+        EXPQT = new(?'),
+        MCRQT = new(?`),
+        MCRSP = new(?,)
       ]
 
       def self.ize(char)

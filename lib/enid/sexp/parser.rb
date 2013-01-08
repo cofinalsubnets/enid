@@ -4,11 +4,11 @@ module Enid
       require 'enid/sexp/parser/token'
       require 'enid/sexp/parser/tokenizer'
       ParseException = Class.new StandardError
-      attr_reader :cons
+      attr_reader :seq
 
       def initialize(sexp)
         @tokens = Tokenizer.new(sexp).tokens
-        parse
+        @tokens.size==1 ? (@seq=@tokens.first.value) : parse
       end
 
       private
@@ -21,18 +21,15 @@ module Enid
         raise(ParseException, "Unexpected end of stream") unless @stack.empty?
       end
 
-
       def handle(token)
         case token
         when Token::OPEN
-          list(cons = Cons.list)
-          @stack << cons
+          @stack << []
         when Token::CLOSE
-          @cons = @stack.pop
-        when Token::DOT
-          @dot = true
+          v = @stack.pop
+          @seq = @stack.empty?? v : cur.push(v)
         else
-          list token.value
+          cur << token.value
         end
       end
 
@@ -40,15 +37,6 @@ module Enid
         @stack.last
       end
 
-      def list(v)
-        return unless cur
-        if @dot
-          cur.nconc(v)
-          @dot = false
-        else
-          cur.car ? cur.nconc(Cons.list v) : cur.rplaca(v)
-        end
-      end
     end
   end
 end

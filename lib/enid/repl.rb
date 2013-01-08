@@ -2,9 +2,11 @@ module Enid
   class Repl
     Stop = Class.new StandardError
     Value = Struct.new :value
+    attr_reader :scope
 
     def initialize
-      @scope = Scope.new quit: Func::Special.new {raise Stop}
+      @scope = Scope.new
+      @scope._eval "(def quit (fn () (raise Kernel Enid::Repl::Stop)))"
       repl
     end
 
@@ -23,7 +25,7 @@ module Enid
     end
 
     def rep
-      print re
+      print ((v=re).kind_of?(Enumerable) ? Sexp.new(v) : v.inspect)
     end
 
     def re
@@ -35,7 +37,7 @@ module Enid
       if line =~ /^:r (.*)$/
         Value.new(eval $1)
       else
-        Sexp.new(line).cons
+        Sexp.new(line).seq
       end
     end
 

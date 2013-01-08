@@ -1,9 +1,9 @@
 module Enid
-  autoload :Cons, 'enid/cons'
-  autoload :Func, 'enid/func'
-  autoload :LambdaList, 'enid/lambda_list'
+  autoload :Sexp, 'enid/sexp'
+  autoload :Lambda, 'enid/lambda'
+  autoload :Macro, 'enid/macro'
+  autoload :Lib, 'enid/lib'
   autoload :Repl, 'enid/repl'
   autoload :Scope, 'enid/scope'
-  autoload :Sexp, 'enid/sexp'
 end
 

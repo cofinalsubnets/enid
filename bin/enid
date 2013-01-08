@@ -1,0 +1,4 @@
+#!/usr/bin/env ruby
+require 'enid'
+Enid::Repl.new
+

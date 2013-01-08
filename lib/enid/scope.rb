@@ -1,9 +1,16 @@
 module Enid
   class Scope
     attr_reader :bindings
+    class << self; attr_accessor :bindings end
+    @bindings = {}
+    include Lib::Std
+
+    def self.inherited(klass)
+      klass.bindings = self.bindings.dup
+    end
 
     def initialize(binds = {})
-      @bindings = Func::Global.bindings.merge(binds)
+      @bindings = self.class.bindings.dup.merge(binds)
     end
 
     def new(binds = {})
@@ -18,40 +25,23 @@ module Enid
       self.class.depth
     end
 
-    def eval(form)
-      if form.is_a?(Cons)
-        case fn = resolve(form.car)
-        when Func::Special
-          call fn, form.cdr
-        when Func, Proc
-          call(fn, form.cdr.map {|e| eval(e)})
-        end
-      elsif form.is_a?(Symbol)
-        @bindings.has_key?(form) ?
-          @bindings[form] :
-          raise(NameError, "Unable to resolve symbol `#{form}' in this context (#{depth} level(s) below toplevel)")
+    def resolve(obj)
+      if obj.is_a?(Symbol)
+        bindings.has_key?(obj) ? bindings[obj].bind(self) : mapply(obj)
+      elsif [Data::Func, UnboundMethod].include? obj.class
+        obj.bind(self)
+      elsif obj.is_a? Proc
+        obj
       else
-        form
-      end
-    end
-
-    def resolve(sym)
-      cf = sym.to_s.downcase.to_sym
-      if @bindings.has_key?(cf)
-        @bindings[cf]
-      else
-        mapply sym
+        raise(TypeError, "Can't apply #{obj}") unless obj.respond_to? :call
       end
     end
 
     def mapply(sym)
-      ->(cons, context) do
-        (a=cons.to_a).first.send(sym, *a.drop(1))
-      end
-    end
-
-    def call(fn, *as)
-      fn.call *as, self
+      ->(*as) { 
+        as.map! {|c| eval *c}
+        as.first.send(sym, *as.drop(1))
+      }
     end
   end
 end
